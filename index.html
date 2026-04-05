@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Véhicules électriques vs thermiques — Analyse prospective 2022–2035</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d1117;font-family:'Courier New',monospace;color:#e6edf3;min-height:100vh;display:flex;justify-content:center;padding:32px 16px 48px}
+    #root{width:100%;max-width:880px}
+    button{background:transparent;border-radius:20px;padding:4px 14px;font-size:11px;cursor:pointer;font-family:inherit}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+    @media(max-width:600px){.grid-3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const {ComposedChart,Line,Area,XAxis,YAxis,CartesianGrid,Tooltip,ReferenceLine,ResponsiveContainer}=Recharts;
+    const RAW=[
+      {year:2022,evObs:13,iceObs:82},
+      {year:2023,evObs:18,iceObs:75},
+      {year:2024,evObs:22,iceObs:70},
+      {year:2025,evObs:25,iceObs:65,evC:25,evO:25,evP:25,iceC:65,iceO:65,iceP:65},
+      {year:2026,evC:28,evO:31,evP:26,iceC:60,iceO:57,iceP:63},
+      {year:2027,evC:32,evO:37,evP:28,iceC:55,iceO:50,iceP:60},
+      {year:2028,evC:36,evO:43,evP:30,iceC:50,iceO:43,iceP:57},
+      {year:2029,evC:40,evO:49,evP:32,iceC:45,iceO:36,iceP:54},
+      {year:2030,evC:44,evO:55,evP:35,iceC:41,iceO:30,iceP:51},
+      {year:2031,evC:48,evO:60,evP:37,iceC:37,iceO:25,iceP:48},
+      {year:2032,evC:52,evO:64,evP:39,iceC:33,iceO:20,iceP:46},
+      {year:2033,evC:56,evO:68,evP:41,iceC:29,iceO:16,iceP:44},
+      {year:2034,evC:59,evO:71,evP:42,iceC:26,iceO:13,iceP:42},
+      {year:2035,evC:62,evO:73,evP:44,iceC:23,iceO:10,iceP:40},
+    ];
+    const data=RAW.map(d=>({...d,evBandBase:d.evP,evBandSize:d.evO!==undefined?d.evO-d.evP:undefined,iceBandBase:d.iceO,iceBandSize:d.iceP!==undefined?d.iceP-d.iceO:undefined}));
+    const Tip=({active,payload,label})=>{
+      if(!active||!payload?.length)return null;
+      const d=data.find(r=>r.year===label);
+      const fmt=v=>v!==undefined?`${v} %`:"—";
+      return(<div style={{background:"#0d1117",border:"1px solid #30363d",borderRadius:8,padding:"12px 16px",fontSize:12,color:"#e6edf3",minWidth:210}}>
+        <div style={{fontWeight:700,marginBottom:8,fontSize:14,color:"#fff"}}>{label}</div>
+        {d?.evObs!==undefined&&<div style={{borderBottom:"1px solid #21262d",paddingBottom:8,marginBottom:8}}>
+          <div style={{color:"#7ee787"}}>⬤ Électrique (obs.) : {fmt(d.evObs)}</div>
+          <div style={{color:"#f0883e"}}>⬤ Thermique (obs.)  : {fmt(d.iceObs)}</div>
+          <div style={{color:"#8b949e"}}>  Hybrides/autre     : {fmt(100-d.evObs-d.iceObs)}</div>
+        </div>}
+        {d?.evC!==undefined&&<><div style={{color:"#3fb950",marginBottom:2}}>▸ EV  pess/central/opti</div>
+        <div style={{color:"#8b949e",paddingLeft:12,marginBottom:6}}>{fmt(d.evP)} · {fmt(d.evC)} · {fmt(d.evO)}</div>
+        <div style={{color:"#d29922",marginBottom:2}}>▸ ICE opti/central/pess</div>
+        <div style={{color:"#8b949e",paddingLeft:12}}>{fmt(d.iceO)} · {fmt(d.iceC)} · {fmt(d.iceP)}</div></>}
+      </div>);
+    };
+    function App(){
+      const [hl,setHl]=React.useState(null);
+      const ea=hl==="ice"?0.15:1,ia=hl==="ev"?0.15:1;
+      return(<div style={{width:"100%"}}>
+        <div style={{fontSize:10,letterSpacing:3,color:"#58a6ff",textTransform:"uppercase",marginBottom:6}}>Analyse prospective · marché automobile mondial</div>
+        <h1 style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:4}}>Part de marché : électrique vs thermique</h1>
+        <p style={{fontSize:12,color:"#8b949e",marginBottom:20}}>Données observées 2022–2025 + trois scénarios de projection 2026–2035</p>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
+          {[{key:"ev",label:"Électrique BEV+PHEV",color:"#3fb950"},{key:"ice",label:"Thermique pur ICE",color:"#e3b341"}].map(s=>(
+            <button key={s.key} onClick={()=>setHl(h=>h===s.key?null:s.key)} style={{border:`1px solid ${s.color}`,background:hl===s.key?s.color+"33":"transparent",color:s.color}}>{s.label}</button>
+          ))}
+        </div>
+        <div style={{height:400}}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{top:10,right:20,bottom:10,left:0}}>
+              <defs>
+                <linearGradient id="evB" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3fb950" stopOpacity={0.35}/><stop offset="95%" stopColor="#3fb950" stopOpacity={0.07}/></linearGradient>
+                <linearGradient id="iceB" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#e3b341" stopOpacity={0.07}/><stop offset="95%" stopColor="#e3b341" stopOpacity={0.35}/></linearGradient>
+              </defs>
+              <CartesianGrid stroke="#21262d" strokeDasharray="3 3"/>
+              <XAxis dataKey="year" tick={{fill:"#8b949e",fontSize:11}} tickLine={false} axisLine={{stroke:"#30363d"}}/>
+              <YAxis domain={[0,100]} tickFormatter={v=>`${v}%`} tick={{fill:"#8b949e",fontSize:11}} tickLine={false} axisLine={{stroke:"#30363d"}}/>
+              <Tooltip content={<Tip/>}/>
+              <ReferenceLine x={2025} stroke="#58a6ff" strokeDasharray="6 3" strokeWidth={1.5} label={{value:"◀ Obs.  Proj. ▶",position:"insideTopRight",fill:"#58a6ff",fontSize:10,dy:-4}}/>
+              <Area type="monotone" dataKey="evBandBase" stackId="ev" fill="transparent" stroke="none" opacity={ea}/>
+              <Area type="monotone" dataKey="evBandSize" stackId="ev" fill="url(#evB)" stroke="none" opacity={ea}/>
+              <Line type="monotone" dataKey="evP" stroke="#3fb950" strokeWidth={1} strokeDasharray="4 3" dot={false} opacity={ea}/>
+              <Line type="monotone" dataKey="evO" stroke="#3fb950" strokeWidth={1} strokeDasharray="4 3" dot={false} opacity={ea}/>
+              <Line type="monotone" dataKey="evC" stroke="#3fb950" strokeWidth={2.5} dot={false} opacity={ea}/>
+              <Line type="monotone" dataKey="evObs" stroke="#7ee787" strokeWidth={3} dot={{r:5,fill:"#7ee787",stroke:"#0d1117",strokeWidth:2}} opacity={ea} connectNulls={false}/>
+              <Area type="monotone" dataKey="iceBandBase" stackId="ice" fill="transparent" stroke="none" opacity={ia}/>
+              <Area type="monotone" dataKey="iceBandSize" stackId="ice" fill="url(#iceB)" stroke="none" opacity={ia}/>
+              <Line type="monotone" dataKey="iceO" stroke="#e3b341" strokeWidth={1} strokeDasharray="4 3" dot={false} opacity={ia}/>
+              <Line type="monotone" dataKey="iceP" stroke="#e3b341" strokeWidth={1} strokeDasharray="4 3" dot={false} opacity={ia}/>
+              <Line type="monotone" dataKey="iceC" stroke="#e3b341" strokeWidth={2.5} dot={false} opacity={ia}/>
+              <Line type="monotone" dataKey="iceObs" stroke="#f0883e" strokeWidth={3} dot={{r:5,fill:"#f0883e",stroke:"#0d1117",strokeWidth:2}} opacity={ia} connectNulls={false}/>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="grid-3">
+          {[{label:"Pessimiste",color:"#6e7681",desc:"Recul réglementaire (report EU 2035, retrait IRA US). EV ≈ 44 % en 2035."},{label:"Central — AIE STEPS",color:"#58a6ff",desc:"Politiques actuelles maintenues. Croisement EV/ICE vers 2032–2033. EV ≈ 62 % en 2035."},{label:"Optimiste — AIE NZE",color:"#3fb950",desc:"Trajectoire Net Zero. Accélération des aides et infrastructures. EV ≈ 73 % en 2035."}].map(s=>(
+            <div key={s.label} style={{background:"#161b22",border:`1px solid ${s.color}44`,borderRadius:8,padding:"12px 14px"}}>
+              <div style={{fontSize:10,fontWeight:700,color:s.color,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>{s.label}</div>
+              <div style={{fontSize:11,color:"#8b949e",lineHeight:1.7}}>{s.desc}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:16,padding:"12px 16px",background:"#161b22",borderRadius:8,borderLeft:"3px solid #30363d",fontSize:10,color:"#6e7681",lineHeight:1.9}}>
+          <strong style={{color:"#8b949e"}}>Note — </strong>EV + ICE ≠ 100 % : l'écart (~10–15 %) = hybrides non rechargeables. Projections en courbe S. Hétérogénéité régionale masquée : Chine ≈ 50 % EV, Europe ≈ 24 %, USA ≈ 10 % en 2025.<br/>
+          <strong style={{color:"#8b949e"}}>Sources — </strong>AIE Global EV Outlook 2024 · Rho Motion/Electrek jan. 2026 · BloombergNEF 2024
+        </div>
+        <div style={{marginTop:24,fontSize:10,color:"#484f58",textAlign:"center"}}>Visualisation interactive · données AIE / Rho Motion · {new Date().getFullYear()}</div>
+      </div>);
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
